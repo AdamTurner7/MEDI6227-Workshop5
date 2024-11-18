@@ -85,3 +85,62 @@ p2 <- scater::plotPCA(pbmc.sce.2, size_by = "nCount_RNA", colour_by = "nFeature_
 detach(package:scater, TRUE)
 
 p1 + p2
+
+#q8 the normalised data shows a more distinct difference of 3/4 clusters where as the raw counts only show 2
+
+#identify top 10 most variable genes
+library(Seurat)
+pbmc <- FindVariableFeatures(pbmc, selection.method = "vst", nfeatures = 2000)
+
+# Identify the 10 most highly variable genes
+top10 <- head(VariableFeatures(pbmc), 10)
+
+# plot variable features with and without labels
+plot1 <- VariableFeaturePlot(pbmc)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+plot1 + plot2
+
+#q9 [1] "PPBP"   "LYZ"    "S100A9" "IGLL5"  "GNLY"   "FTL"    "PF4"    "FTH1"   "GNG11"  "S100A8"
+
+#q10 where are the variable genes stored in pbmc seurat object
+genes.vst <- as.data.frame(cbind(rownames(pbmc), pbmc@assays$RNA@meta.data$vf_vst_counts_variance.standardized))
+colnames(genes.vst) <- c("gene", "vst")
+var.genes <- VariableFeatures(pbmc)
+genes.vst.variable <- genes.vst[genes.vst$gene %in% var.genes, ]
+genes.vst.variable <- genes.vst.variable[order(genes.vst.variable$vst, decreasing = T), ]
+
+#identification of highly expressed genes
+detach(package:Seurat, TRUE)
+library(scater)
+plot4 <- plotHighestExprs(pbmc.sce.2, exprs_values = "counts", colour_cells_by = "nFeature_RNA")
+plot4
+plot5 <- plotHighestExprs(pbmc.sce.2, exprs_values = "counts", colour_cells_by = "nCount_RNA")
+plot5
+plot6 <- plotHighestExprs(pbmc.sce.2, exprs_values = "counts", colour_cells_by = "percent.mt")
+plot6
+
+##exploration of variable genes for feature selection
+# Extract the variable genes to plot
+detach(package:scater, TRUE)
+library(Seurat)
+pmbc.variable.genes <- pbmc[c(VariableFeatures(pbmc)), ]
+pmbc.variable.genes.sce <- as.SingleCellExperiment(pmbc.variable.genes, assay = "RNA")
+detach(package:Seurat, TRUE)
+library(scater)
+# Be patient these plots can be slow to load.
+plot7 <- plotHighestExprs(pmbc.variable.genes.sce, exprs_values = "counts", colour_cells_by = "nFeature_RNA")
+plot7
+# Be patient these plots can be slow to load.
+plot8 <- plotHighestExprs(pmbc.variable.genes.sce, exprs_values = "counts", colour_cells_by = "nCount_RNA")
+plot8
+# Be patient these plots can be slow to load.
+plot9 <- plotHighestExprs(pmbc.variable.genes.sce, exprs_values = "counts", colour_cells_by = "percent.mt")
+plot9
+
+detach(package:scater, TRUE)
+
+###scaling the data
+
+library(Seurat)
+all.genes <- rownames(pbmc)
+pbmc <- ScaleData(pbmc, features = all.genes)
